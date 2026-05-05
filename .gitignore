@@ -1,0 +1,33 @@
+# ==========================================
+# Project ARK - Discard List
+# ==========================================
+
+# Environments & Dependencies
+backend/venv/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+.env
+.env.*
+
+# Data & Heavy Assets (CRITICAL: Block all data from repo)
+data/
+weights/
+*.csv
+*.jp2
+*.npy
+*.pt
+*.safetensors
+*.bin
+*.h5
+*.pkl
+*.tif
+*.tiff
+
+# Logs & Tracking
+*.log
+mlruns/
+.ipynb_checkpoints/
+
+# OS Generated Files
+.DS_Store
