@@ -119,7 +119,7 @@ df = df[cols]
 print("\n" + "=" * 80)
 print("🛰️ PROJECT ARK: PIPELINE SUMMARY")
 print("=" * 80)
-display(df) # Use print(df.to_markdown()) if not in a Jupyter environment
+print(df) # Use print(df.to_markdown()) if not in a Jupyter environment
 
 # %% [Code Cell 6: Visualizing GPU Time Saved]
 plt.style.use('dark_background')
