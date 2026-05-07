@@ -95,7 +95,7 @@ class PrithviForSequenceClassification(torch.nn.Module):
         # Prithvi-100M hidden dimension is 768
         self.classifier = torch.nn.Linear(768, num_classes)
         
-    def forward(self, pixel_values, labels=None):
+    def forward(self, pixel_values, labels=None, **kwargs):
         # Forward pass through TerraTorch backbone
         features = self.backbone(pixel_values)
         embeddings = features[-1] # Deepest layer
