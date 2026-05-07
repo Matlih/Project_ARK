@@ -6,8 +6,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments,
 from peft import LoraConfig, get_peft_model
 from backend.data.ndrrmc_seed import NDRRMC_TRAINING_DATA
 
-# Force internal library to recognize ROCm environment if bitsandbytes is finicky
-os.environ["BNB_CUDA_VERSION"] = "121" # Dummy for bitsandbytes fallback
+# Force internal library to recognize ROCm environment
 os.environ["HSA_OVERRIDE_GFX_VERSION"] = "9.4.2"
 
 def create_ndrrmc_dataset() -> Dataset:
@@ -16,7 +15,6 @@ def create_ndrrmc_dataset() -> Dataset:
     
     formatted_dataset = []
     for data in NDRRMC_TRAINING_DATA:
-        # Construct the prompt template Qwen expects
         text = f"User: {data['instruction']}\n\n{data['input']}\n\nAssistant: {data['output']}<|endoftext|>"
         formatted_dataset.append({"text": text})
         
@@ -30,22 +28,20 @@ if __name__ == "__main__":
     output_dir = "data/weights/qwen-vl-lora-ndrrmc/"
     model_id = "Qwen/Qwen-VL-Chat"
     
-    # 1. Initialize Dataset
     dataset = create_ndrrmc_dataset()
     
-    # 2. Load Tokenizer & Model
     print("2. Loading Base Model & Tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
     tokenizer.pad_token_id = tokenizer.eod_id
     
+    # FIX 1: Use bfloat16 for the MI300X
     base_model = AutoModelForCausalLM.from_pretrained(
         model_id, 
         trust_remote_code=True,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16, 
         device_map="auto"
     )
 
-    # 3. Tokenize with Labels (Fix for the ValueError)
     def tokenize_function(examples):
         tokenized_output = tokenizer(
             examples["text"], 
@@ -53,13 +49,11 @@ if __name__ == "__main__":
             truncation=True, 
             max_length=512
         )
-        # For CausalLM, labels are the input_ids
         tokenized_output["labels"] = [list(ids) for ids in tokenized_output["input_ids"]]
         return tokenized_output
 
     tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
-    # 4. Inject LoRA
     print("3. Injecting LoRA Configuration...")
     lora_config = LoraConfig(
         r=8, 
@@ -72,22 +66,22 @@ if __name__ == "__main__":
     peft_model = get_peft_model(base_model, lora_config)
     peft_model.print_trainable_parameters()
 
-    # 5. Training Arguments
+    print("4. Configuring Training Arguments...")
     training_args = TrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=5, # Increased slightly for 50 examples
+        num_train_epochs=5,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
-        fp16=True,
+        bf16=True, # FIX 2: Enable BF16 instead of FP16
+        fp16=False, # Ensure FP16 is explicitly off
         logging_steps=1,
-        save_strategy="no", # We save manually at the end
+        save_strategy="no",
         learning_rate=2e-4,
         weight_decay=0.01,
         push_to_hub=False,
         report_to="none"
     )
 
-    # Use a data collator that understands language modeling
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     trainer = Trainer(
@@ -98,13 +92,11 @@ if __name__ == "__main__":
     )
 
     print("5. Commencing Training Loop...")
-    # Save PID for monitoring
     with open("logs/qwen_finetune.pid", "w") as f:
         f.write(str(os.getpid()))
         
     trainer.train()
     
-    # 6. Save final adapter
     print(f"6. Saving LoRA Adapters to {output_dir}...")
     peft_model.save_pretrained(output_dir)
     print("--- Qwen-VL Fine-Tuning Complete ---")
