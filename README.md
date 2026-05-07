@@ -35,3 +35,9 @@ From a raw satellite pixel to a complete NDRRMC situation report with peso loss 
 | **Track 1** | 6-Agent Mission Control | ✅ |
 | **Track 2** | Prithvi LoRA + Qwen-VL LoRA + XGBoost | ✅ |
 | **Track 3** | Sentinel-2 + Prithvi + Qwen-VL Multimodal | ✅ |
+
+## Built For
+PhilSA · NDRRMC · PAGASA · Philippine disaster survivors.
+
+## Acknowledgements
+AMD Developer Cloud · NASA EONET · ESA Copernicus · IBM-NASA Prithvi · lablab.ai
