@@ -23,6 +23,8 @@ fmask
 # Machine Learning Core
 scikit-learn==1.4.2
 xgboost==2.0.3
+timm==0.9.16
+terratorch
 
 # LLM / Vision Fine-Tuning
 peft==0.10.0
