@@ -32,9 +32,9 @@ transformers==4.40.0
 accelerate==0.29.3
 
 # Agentic Frameworks
-langchain==0.1.20
-langgraph==0.0.55
-crewai==0.30.11
+langchain
+langgraph
+crewai
 chromadb==0.5.0
 
 # Utilities

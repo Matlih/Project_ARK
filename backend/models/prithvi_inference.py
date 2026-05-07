@@ -1,6 +1,7 @@
 import time
 import json
 import torch
+import logging
 import torch.nn.functional as F
 import numpy as np
 import rasterio
@@ -45,7 +46,19 @@ class PrithviAnalyzer:
         # Prithvi normalization statistics
         self.means = torch.tensor([494.905, 815.239, 924.440, 2968.881, 2634.621, 1739.579]).view(1, 6, 1, 1).to(self.device)
         self.stds = torch.tensor([284.925, 357.104, 363.118, 1099.368, 1124.686, 1144.726]).view(1, 6, 1, 1).to(self.device)
-
+        
+        # 1. Initialize the flag
+        self.adapter_loaded = False 
+        
+        # 2. THE NEW TRIGGER: Point to your downloaded weights
+        adapter_path = "data/weights/prithvi-lora-ph" 
+        
+        import os
+        if os.path.exists(adapter_path):
+            self.load_lora_adapter(adapter_path)
+        else:
+            logging.info(f"No LoRA adapter found at {adapter_path}. Proceeding with base foundation weights.")
+            
     def _find_band_path(self, scene_dir: Path, band_suffix: str) -> Path:
         """Helper to safely locate band files inside the complex .SAFE directory structure."""
         files = list(scene_dir.rglob(f"*{band_suffix}.jp2"))
@@ -237,6 +250,40 @@ class PrithviAnalyzer:
         
         self.generate_damage_polygons(result, scene_dir)
         return result
+        
+    def load_lora_adapter(self, adapter_path: str):
+        """
+        Dynamically injects LoRA weights into the base TerraTorch model.
+        Fails gracefully to ensure the core pipeline never crashes.
+        """
+        from peft import PeftModel
+        import torch
+        import logging
+
+        logging.info(f"Attempting to load LoRA adapter from: {adapter_path}")
+        
+        try:
+            # 1. Inject the adapter into the base model
+            self.model.backbone = PeftModel.from_pretrained(
+                self.model.backbone, 
+                adapter_path
+            )
+            
+            # 2. Force a lightweight forward pass to verify tensor alignment
+            logging.info("Adapter injected. Running dry-run tensor verification...")
+            dummy_input = torch.randn(1, 6, 1, 224, 224).to(self.device)
+            
+            with torch.no_grad():
+                _ = self.model.backbone(dummy_input)
+                
+            logging.info("✅ LoRA adapter loaded and verified successfully. Inference logic updated.")
+            self.adapter_loaded = True
+            
+        except Exception as e:
+            # The Ultimate Failsafe
+            logging.warning(f"⚠️ LoRA Injection Failed: {e}")
+            logging.warning("Adapter dropped. Continuing inference with base Prithvi-100M foundation weights.")
+            self.adapter_loaded = False
 
 if __name__ == "__main__":
     print("==========================================")
