@@ -63,7 +63,7 @@ class PrithviAnalyzer:
             
     def _find_band_path(self, scene_dir: Path, band_suffix: str) -> Path:
         """Helper to safely locate band files inside the complex .SAFE directory structure."""
-        files = list(scene_dir.rglob(f"*{band_suffix}.jp2"))
+        files = list(scene_dir.rglob(f"*{band_suffix}*.jp2"))
         if not files:
             raise FileNotFoundError(f"Could not find band ending in {band_suffix} in {scene_dir}")
         files.sort(key=lambda x: "10m" in str(x), reverse=True)
