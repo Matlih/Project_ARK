@@ -1,0 +1,82 @@
+(venv) root@2:~/Project_ARK# nohup python -m backend.models.finetune_qwen_vl > logs/qwen_finetune.log 2>&1 &
+[1] 84014
+(venv) root@2:~/Project_ARK# tail -f logs/qwen_finetune.log
+
+==========================================
+🧠 PROJECT ARK - Qwen-VL LoRA Fine-Tuning
+==========================================
+
+🧠 Loading the 50-item high-fidelity NDRRMC seed dataset...
+2. Loading Base Model & Tokenizer...
+Loading checkpoint shards: 100%|██████████| 10/10 [00:08<00:00,  1.25it/s]
+Map: 100%|██████████| 50/50 [00:00<00:00, 2356.99 examples/s]
+3. Injecting LoRA Configuration...
+trainable params: 4,194,304 || all params: 9,661,129,472 || trainable%: 0.04341421996419758
+4. Configuring Training Arguments...
+5. Commencing Training Loop...
+100%|██████████| 60/60 [01:18<00:00,  1.30s/it]
+/root/Project_ARK/venv/lib/python3.12/site-packages/huggingface_hub/file_download.py:949: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+{'loss': 3.184, 'grad_norm': 0.8046875, 'learning_rate': 0.00019666666666666666, 'epoch': 0.08}
+{'loss': 3.2199, 'grad_norm': 0.76171875, 'learning_rate': 0.00019333333333333333, 'epoch': 0.16}
+{'loss': 2.9757, 'grad_norm': 0.921875, 'learning_rate': 0.00019, 'epoch': 0.24}
+{'loss': 2.478, 'grad_norm': 0.8671875, 'learning_rate': 0.0001866666666666667, 'epoch': 0.32}
+{'loss': 2.8962, 'grad_norm': 1.0390625, 'learning_rate': 0.00018333333333333334, 'epoch': 0.4}
+{'loss': 2.6477, 'grad_norm': 1.078125, 'learning_rate': 0.00018, 'epoch': 0.48}
+{'loss': 2.6646, 'grad_norm': 1.0859375, 'learning_rate': 0.00017666666666666666, 'epoch': 0.56}
+{'loss': 2.5212, 'grad_norm': 1.1875, 'learning_rate': 0.00017333333333333334, 'epoch': 0.64}
+{'loss': 2.2857, 'grad_norm': 1.21875, 'learning_rate': 0.00017, 'epoch': 0.72}
+{'loss': 2.2302, 'grad_norm': 1.1328125, 'learning_rate': 0.0001666666666666667, 'epoch': 0.8}
+{'loss': 2.1257, 'grad_norm': 1.4140625, 'learning_rate': 0.00016333333333333334, 'epoch': 0.88}
+{'loss': 1.9169, 'grad_norm': 1.15625, 'learning_rate': 0.00016, 'epoch': 0.96}
+{'loss': 1.9413, 'grad_norm': 1.5859375, 'learning_rate': 0.00015666666666666666, 'epoch': 1.04}
+{'loss': 2.0033, 'grad_norm': 1.5, 'learning_rate': 0.00015333333333333334, 'epoch': 1.12}
+{'loss': 1.692, 'grad_norm': 1.3359375, 'learning_rate': 0.00015000000000000001, 'epoch': 1.2}
+{'loss': 1.6363, 'grad_norm': 1.2734375, 'learning_rate': 0.00014666666666666666, 'epoch': 1.28}
+{'loss': 1.7808, 'grad_norm': 0.92578125, 'learning_rate': 0.00014333333333333334, 'epoch': 1.36}
+{'loss': 1.6863, 'grad_norm': 1.1171875, 'learning_rate': 0.00014, 'epoch': 1.44}
+{'loss': 1.658, 'grad_norm': 1.1875, 'learning_rate': 0.00013666666666666666, 'epoch': 1.52}
+{'loss': 1.6783, 'grad_norm': 1.2734375, 'learning_rate': 0.00013333333333333334, 'epoch': 1.6}
+{'loss': 1.5286, 'grad_norm': 1.1640625, 'learning_rate': 0.00013000000000000002, 'epoch': 1.68}
+{'loss': 1.231, 'grad_norm': 1.3046875, 'learning_rate': 0.00012666666666666666, 'epoch': 1.76}
+{'loss': 1.4914, 'grad_norm': 1.34375, 'learning_rate': 0.00012333333333333334, 'epoch': 1.84}
+{'loss': 1.4521, 'grad_norm': 1.4765625, 'learning_rate': 0.00012, 'epoch': 1.92}
+{'loss': 1.4103, 'grad_norm': 1.3046875, 'learning_rate': 0.00011666666666666668, 'epoch': 2.0}
+{'loss': 1.4338, 'grad_norm': 1.296875, 'learning_rate': 0.00011333333333333334, 'epoch': 2.08}
+{'loss': 1.2281, 'grad_norm': 1.703125, 'learning_rate': 0.00011000000000000002, 'epoch': 2.16}
+{'loss': 1.1482, 'grad_norm': 1.359375, 'learning_rate': 0.00010666666666666667, 'epoch': 2.24}
+{'loss': 1.174, 'grad_norm': 1.609375, 'learning_rate': 0.00010333333333333334, 'epoch': 2.32}
+{'loss': 1.4659, 'grad_norm': 1.8203125, 'learning_rate': 0.0001, 'epoch': 2.4}
+{'loss': 1.125, 'grad_norm': 1.703125, 'learning_rate': 9.666666666666667e-05, 'epoch': 2.48}
+{'loss': 1.3794, 'grad_norm': 1.515625, 'learning_rate': 9.333333333333334e-05, 'epoch': 2.56}
+{'loss': 1.2924, 'grad_norm': 1.4609375, 'learning_rate': 9e-05, 'epoch': 2.64}
+{'loss': 1.122, 'grad_norm': 1.34375, 'learning_rate': 8.666666666666667e-05, 'epoch': 2.72}
+{'loss': 1.467, 'grad_norm': 1.5859375, 'learning_rate': 8.333333333333334e-05, 'epoch': 2.8}
+{'loss': 1.4559, 'grad_norm': 1.4765625, 'learning_rate': 8e-05, 'epoch': 2.88}
+{'loss': 1.1906, 'grad_norm': 1.5, 'learning_rate': 7.666666666666667e-05, 'epoch': 2.96}
+{'loss': 1.3927, 'grad_norm': 2.03125, 'learning_rate': 7.333333333333333e-05, 'epoch': 3.04}
+{'loss': 1.1557, 'grad_norm': 1.484375, 'learning_rate': 7e-05, 'epoch': 3.12}
+{'loss': 0.9494, 'grad_norm': 1.4609375, 'learning_rate': 6.666666666666667e-05, 'epoch': 3.2}
+{'loss': 1.1688, 'grad_norm': 1.328125, 'learning_rate': 6.333333333333333e-05, 'epoch': 3.28}
+{'loss': 1.0794, 'grad_norm': 1.578125, 'learning_rate': 6e-05, 'epoch': 3.36}
+{'loss': 1.2238, 'grad_norm': 1.3359375, 'learning_rate': 5.666666666666667e-05, 'epoch': 3.44}
+{'loss': 1.2976, 'grad_norm': 1.546875, 'learning_rate': 5.333333333333333e-05, 'epoch': 3.52}
+{'loss': 0.9699, 'grad_norm': 1.84375, 'learning_rate': 5e-05, 'epoch': 3.6}
+{'loss': 1.1969, 'grad_norm': 1.5859375, 'learning_rate': 4.666666666666667e-05, 'epoch': 3.68}
+{'loss': 1.3328, 'grad_norm': 1.5390625, 'learning_rate': 4.3333333333333334e-05, 'epoch': 3.76}
+{'loss': 0.8742, 'grad_norm': 1.6171875, 'learning_rate': 4e-05, 'epoch': 3.84}
+{'loss': 1.2276, 'grad_norm': 1.8203125, 'learning_rate': 3.6666666666666666e-05, 'epoch': 3.92}
+{'loss': 1.1827, 'grad_norm': 1.2734375, 'learning_rate': 3.3333333333333335e-05, 'epoch': 4.0}
+{'loss': 1.2053, 'grad_norm': 1.3125, 'learning_rate': 3e-05, 'epoch': 4.08}
+{'loss': 0.9636, 'grad_norm': 1.6875, 'learning_rate': 2.6666666666666667e-05, 'epoch': 4.16}
+{'loss': 1.1738, 'grad_norm': 1.4921875, 'learning_rate': 2.3333333333333336e-05, 'epoch': 4.24}
+{'loss': 0.9954, 'grad_norm': 1.578125, 'learning_rate': 2e-05, 'epoch': 4.32}
+{'loss': 1.1734, 'grad_norm': 1.65625, 'learning_rate': 1.6666666666666667e-05, 'epoch': 4.4}
+{'loss': 1.0616, 'grad_norm': 1.6875, 'learning_rate': 1.3333333333333333e-05, 'epoch': 4.48}
+{'loss': 0.9859, 'grad_norm': 1.8125, 'learning_rate': 1e-05, 'epoch': 4.56}
+{'loss': 0.9261, 'grad_norm': 1.59375, 'learning_rate': 6.666666666666667e-06, 'epoch': 4.64}
+{'loss': 1.1137, 'grad_norm': 1.78125, 'learning_rate': 3.3333333333333333e-06, 'epoch': 4.72}
+{'loss': 1.003, 'grad_norm': 1.6640625, 'learning_rate': 0.0, 'epoch': 4.8}
+{'train_runtime': 78.1666, 'train_samples_per_second': 3.198, 'train_steps_per_second': 0.768, 'train_loss': 1.5578539709250132, 'epoch': 4.8}
+6. Saving LoRA Adapters to data/weights/qwen-vl-lora-ndrrmc/...
+--- Qwen-VL Fine-Tuning Complete ---

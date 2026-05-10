@@ -257,8 +257,8 @@ Project_ARK/
 ```bash
 # Set in Vercel Dashboard → Settings → Environment Variables:
 VITE_SIMULATION_MODE=true
-VITE_API_URL=http://165.245.138.122:8000
-VITE_WS_URL=ws://165.245.138.122:8000/ws
+VITE_API_URL=http://AMD_CLOUD_IP:8000
+VITE_WS_URL=ws://AMD_CLOUD_IP:8000/ws
 ```
 
 ### AMD Developer Cloud (Backend — Live Mode)
@@ -312,11 +312,11 @@ To verify the sovereign execution of this pipeline on AMD hardware, below are th
 
 ### 1. ROCm Gate Pipeline Benchmark
 *Validating the 3-Gate interception system against raw, corrupted satellite arrays before they hit the ML layer.*
-![Gate Pipeline Benchmark](docs/notebook1.PNG)
+![Gate Pipeline Benchmark](docs/images/notebook1.PNG)
 
 ### 2. Prithvi-100M LoRA Fine-Tuning (ROCm)
 *Executing geometric augmentation and LoRA adapter injection on the NASA/IBM Earth Observation backbone.*
-![Prithvi LoRA Training](docs/train_pritvhi.PNG)
+![Prithvi LoRA Training](docs/images/train_pritvhi.PNG)
 
 ### 3. Qwen-VL-7B Multimodal Fine-Tuning
 *Training the visual-language model to output strict Philippine NDRRMC JSON schema using 4.19M trainable parameters.*

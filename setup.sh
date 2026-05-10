@@ -12,10 +12,20 @@ else
     echo "NO GPU (rocm-smi not found). Proceeding with CPU-only mode."
 fi
 
+# 1.5 Prepare System Environment
+# Aligned with manual success logs for MI300X/Linux
+echo -e "\n[1.5/5] Preparing System Environment..."
+apt-get update && apt-get install -y python3.12-venv
+
 # 2. Install Python Dependencies with ROCm Index
 echo -e "\n[2/5] Installing Dependencies..."
 pip install --upgrade pip
-pip install -r backend/requirements.txt --extra-index-url https://download.pytorch.org/whl/rocm6.0
+
+# Explicitly install ROCm optimized torch suite first
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+
+# Install remaining stack from requirements file
+pip install -r backend/requirements.txt
 
 # Install vLLM separately as requested
 echo "Installing vLLM..."
@@ -45,17 +55,8 @@ else
         postgres:16
 fi
 
-# 5. Verify PyTorch GPU Visibility
-echo -e "\n[5/5] Verifying PyTorch ROCm Integration..."
-python3 -c "
-import torch
-print('GPU Available:', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('Device Name:', torch.cuda.get_device_name(0))
-else:
-    print('Device Name: None')
-"
+# 5. Verify Installation
+echo -e "\n[5/5] Verifying ROCm Visibility..."
+python3 -c "import torch; print(f'ROCm available: {torch.cuda.is_available()}'); print(f'Device count: {torch.cuda.device_count()}')"
 
-echo -e "\n=========================================="
-echo "✅ PROJECT ARK ENVIRONMENT READY"
-echo "=========================================="
+echo -e "\nSetup Complete. Project ARK is ready for execution."

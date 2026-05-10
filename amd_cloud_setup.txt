@@ -1,0 +1,52 @@
+========================================
+ AMD MI300X Cloud (Digital Ocean) SETUP
+========================================
+
+Phase 1: Spin Up the MI300X (Web Browser)
+Go to the AMD Developer Cloud Dashboard and click to create a new GPU droplet.
+
+Hardware: Select MI300X (1 GPU, 192GB VRAM).
+
+Image (CRITICAL): Select the PyTorch Quick Start package (PyTorch 2.6.0, ROCm 7.0.0). Do not select base ROCm.
+
+Authentication: Check the box next to your existing SSH Key (e.g., "ARK Key"). You do not need to make a new one.
+
+Click Create GPU Droplet. Wait 60 seconds, refresh the page, and copy the new Public IPv4 address.
+__________________________________________________
+
+Phase 2: Enter the Cloud (Local VS Code Terminal)
+Open your normal Windows VS Code terminal and run:
+
+Bash:
+ssh root@<YOUR_NEW_IP_ADDRESS>
+(Type yes when it asks if you want to continue connecting).
+__________________________________________________
+
+Phase 3: The Code & Bulletproof Setup (Cloud SSH Terminal)
+Do not run setup.sh tomorrow. We are going to manually construct the perfect virtual environment using the exact commands that defeated the Linux security block tonight.
+
+1. Clone the Code:
+
+Bash
+git clone https://github.com/Matlih/Project_ARK.git
+Username: Matlih
+
+Password: Paste the ghp_... Personal Access Token you generated tonight. (Remember, it will be invisible when you paste it. Just hit Enter).
+
+2. Build the Environment:
+Run these exactly as written:
+
+Bash
+cd Project_ARK
+apt-get update && apt-get install -y python3.12-venv
+python3 -m venv venv
+source venv/bin/activate
+3. Install the Stack:
+
+Bash
+pip install pandas rasterio scikit-learn xgboost fastapi uvicorn psycopg2-binary rq redis timm==0.9.16 terratorch datasets peft langgraph
+4. Install the AMD PyTorch Bridge:
+
+Bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+__________________________________________________
