@@ -11,7 +11,7 @@ __pycache__/
 .env.*
 
 # Data & Heavy Assets (CRITICAL: Block all data from repo)
-data/
+/data/
 weights/
 *.csv
 *.jp2
