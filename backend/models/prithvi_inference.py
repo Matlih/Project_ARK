@@ -99,8 +99,8 @@ class PrithviAnalyzer:
         tensor_temporal = tensor_resized.unsqueeze(2)
         tensor_norm = (tensor_temporal - self.means.unsqueeze(2)) / self.stds.unsqueeze(2)
         
-        if self.device == "cuda":
-            tensor_norm = tensor_norm.half()
+        #if self.device == "cuda":
+            #tensor_norm = tensor_norm.half()
 
         return tensor_norm
 
@@ -119,8 +119,11 @@ class PrithviAnalyzer:
             input_tensor = self.preprocess(scene_dir)
 
             with torch.no_grad():
+                # THE ARCHITECTURAL FIX: Force 32-bit precision handshake
+                input_tensor = input_tensor.float()
+                
                 features = self.model(input_tensor)
-                embeddings = features[-1] 
+                embeddings = features[-1]
                 
                 if embeddings.dim() == 4:
                     embeddings_spatial = embeddings

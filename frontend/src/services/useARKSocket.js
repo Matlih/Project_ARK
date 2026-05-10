@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { useArkStore } from '../store/arkStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+const API_URL = import.meta.env.VITE_API_URL || 'http://165.245.138.122:8000';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://165.245.138.122t:8000/ws';
 
 /**
  * Pings the backend to verify the MI300X instance is online and returning 'live' status.
