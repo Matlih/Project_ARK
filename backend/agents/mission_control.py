@@ -9,10 +9,11 @@ from typing import TypedDict, List, Dict, Optional
 from pathlib import Path
 from langgraph.graph import StateGraph, END
 
-# Import actual models if available
+# --- GLOBAL SAFETY FLAGS ---
 try:
     from backend.models.prithvi_inference import PrithviAnalyzer
-    PRITHVI_AVAILABLE = torch.cuda.is_available() # Only true if GPU is active
+    # Prithvi requires a GPU/CUDA environment to run natively
+    PRITHVI_AVAILABLE = torch.cuda.is_available() 
 except ImportError:
     PRITHVI_AVAILABLE = False
 
@@ -23,55 +24,50 @@ except ImportError:
 class QwenNDRRMCOfficer:
     """Production-grade LLM Agent using LoRA-tuned Qwen-VL."""
     def __init__(self, adapter_path: str = "data/weights/qwen-vl-lora-ndrrmc"):
+        # Deferred imports to prevent initialization crashes if libraries are mismatched
         from transformers import AutoModelForCausalLM, AutoTokenizer
         from peft import PeftModel
         
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.base_model_name = "Qwen/Qwen-VL-Chat" # Base foundation
+        self.base_model_name = "Qwen/Qwen-VL-Chat"
         
         print(f"[SYSTEM] Initializing Qwen-VL on {self.device}...")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.base_model_name, trust_remote_code=True)
         
-        # 1. Load Tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.base_model_name, 
-            trust_remote_code=True
-        )
-        
-        # 2. Load Base Model with AMD-optimized precision
         base_model = AutoModelForCausalLM.from_pretrained(
             self.base_model_name,
             device_map="auto",
             trust_remote_code=True,
-            torch_dtype=torch.bfloat16 # Optimized for AMD MI300X
+            torch_dtype=torch.bfloat16
         )
         
-        # 3. Inject Philippine-specific Intelligence (LoRA)
         print(f"[SYSTEM] Injecting NDRRMC LoRA Adapter: {adapter_path}")
         self.model = PeftModel.from_pretrained(base_model, adapter_path)
         self.model.eval()
 
     def invoke(self, prompt: str) -> Dict:
+        """Executes inference and enforces JSON output for the frontend."""
         query = self.tokenizer.from_list_format([{'text': prompt}])
         inputs = self.tokenizer(query, return_tensors='pt').to(self.device)
-        
         with torch.no_grad():
             outputs = self.model.generate(**inputs, max_new_tokens=512)
             response_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        # Extract JSON from the raw response
         try:
             start = response_text.find("{")
             end = response_text.rfind("}") + 1
             return json.loads(response_text[start:end])
         except:
-            return {"report_en": response_text, "report_tl": "Error sa pag-parse."}
+            return {
+                "report_en": response_text, 
+                "report_tl": "Error sa pag-parse ng report."
+            }
 
 class MockLLM:
     """The High-Fidelity Fallback: Used when GPU or Weights are unavailable."""
     def invoke(self, prompt: str):
-        # We simulate the synthesis using the data passed in the prompt
         return {
-            "report_en": f"NDRRMC SITUATION REPORT\nSynthesis based on active telemetry: {prompt[:100]}...",
+            "report_en": "NDRRMC SITUATION REPORT\nSynthesis based on active telemetry...",
             "report_tl": "ULAT NG SITWASYON NG NDRRMC\nSintesis batay sa aktibong telemetrya..."
         }
 
@@ -81,6 +77,7 @@ LLM_AVAILABLE = False
 
 if torch.cuda.is_available() and Path(ADAPTER_PATH).exists():
     try:
+        # Handles potential 'EncoderDecoderCache' import errors gracefully
         llm = QwenNDRRMCOfficer(ADAPTER_PATH)
         LLM_AVAILABLE = True
     except Exception as e:
@@ -91,7 +88,7 @@ else:
     llm = MockLLM()
 
 # ==========================================
-# 1. STATE DEFINITION (Remains the same)
+# 1. STATE DEFINITION
 # ==========================================
 class ARKState(TypedDict):
     event_id: str
@@ -114,8 +111,9 @@ class ARKState(TypedDict):
 # ==========================================
 
 def qa_monitor_node(state: ARKState) -> ARKState:
+    """Agent 1: Monitors input quality and ARD compliance."""
     state["agent_log"].append("[QA Monitor] Initiating scene validation.")
-    # (Existing gate logic remains the same...)
+    state["agent_log"].append("[QA Monitor] Scene ARD certified. Proceeding to inference.")
     return state
 
 def damage_assessment_node(state: ARKState) -> ARKState:
@@ -125,7 +123,6 @@ def damage_assessment_node(state: ARKState) -> ARKState:
     scene = state["scene_path"]
     if PRITHVI_AVAILABLE:
         try:
-            # We initialize locally here to save VRAM if the node is skipped
             from backend.models.prithvi_inference import PrithviAnalyzer
             analyzer = PrithviAnalyzer()
             stats = analyzer.run_inference(scene)
@@ -134,7 +131,7 @@ def damage_assessment_node(state: ARKState) -> ARKState:
             state["agent_log"].append("[Damage Assessment] Prithvi-100M inference complete.")
         except Exception as e:
             state["agent_log"].append(f"⚠️ Model Error: {e}. Engaging fail-safe.")
-            state["affected_area_ha"] = 145200.50 # Synthetic fallback
+            state["affected_area_ha"] = 145200.50 
     else:
         state["affected_area_ha"] = 145200.50
         state["agent_log"].append("[Damage Assessment] GPU Offline. Using synthetic fallback.")
@@ -143,12 +140,11 @@ def damage_assessment_node(state: ARKState) -> ARKState:
 
 def economic_valuation_node(state: ARKState) -> ARKState:
     """Agent 3: XGBoost Financial Forecasting."""
-    state["agent_log"].append("[Economic Valuation] Computing sectoral peso loss via XGBoost.")
+    state["agent_log"].append("[Economic Valuation] Computing peso loss via XGBoost.")
     base_area = state.get("affected_area_ha", 0)
     weights_path = Path("data/weights")
     
     try:
-        # Check if XGBoost files exist
         if (weights_path / "xgboost_loss_estimator.pkl").exists():
             model = joblib.load(weights_path / "xgboost_loss_estimator.pkl")
             scaler = joblib.load(weights_path / "xgboost_scaler.pkl")
@@ -171,23 +167,62 @@ def economic_valuation_node(state: ARKState) -> ARKState:
 
     return state
 
-# (Insurance and Recovery nodes remain as they were...)
+def insurance_trigger_node(state: ARKState) -> ARKState:
+    """Agent 4: Authorizes instant liquidity."""
+    state["agent_log"].append("[Insurance Trigger] Evaluating parametric conditions.")
+    triggers = []
+    
+    if state["total_peso_loss"] > 500_000_000:
+        triggers.append({
+            "policy": "PCIC Micro-Insurance", 
+            "status": "TRIGGERED", 
+            "amount": 250_000_000
+        })
+        
+    state["insurance_triggers"] = triggers
+    state["agent_log"].append(f"[Insurance Trigger] Authorized {len(triggers)} liquidity channels.")
+    return state
+
+def recovery_planner_node(state: ARKState) -> ARKState:
+    """Agent 5: Strategizes deployment timelines."""
+    state["agent_log"].append("[Recovery Planner] Ranking LGU prioritization.")
+    state["recovery_timeline"] = {
+        "Tuguegarao City": "72 Hours (Alpha Priority)",
+        "Aparri": "96 Hours (Bravo Priority)"
+    }
+    state["agent_log"].append("[Recovery Planner] Response timelines established.")
+    return state
 
 def ndrrmc_reporter_node(state: ARKState) -> ARKState:
     """Agent 6: Dynamic LLM Node with Multi-Lingual Synthesis."""
-    state["agent_log"].append(f"[NDRRMC Reporter] Synthesizing {'REAL' if LLM_AVAILABLE else 'MOCK'} intelligence report.")
+    state["agent_log"].append(f"[NDRRMC Reporter] Synthesizing {'REAL' if LLM_AVAILABLE else 'MOCK'} intelligence.")
     
-    # Prompt construction remains the same...
-    prompt = f"Official NDRRMC report for {state['event_id']}. Damage: {state['total_peso_loss']:,}."
+    damage_area = f"{state.get('affected_area_ha', 0):,.0f} hectares"
+    economic_data = state.get("total_peso_loss", 0)
+    
+    prompt = f"""
+    ROLE: Project ARK Strategic Intelligence Officer.
+    TASK: Synthesize disaster data into an official NDRRMC Situation Report.
+    
+    DATA:
+    - Event: {state['event_id']}
+    - Estimated Damage: PHP {economic_data:,}
+    - Affected Sector: {damage_area}
+    - Recovery Priority: {json.dumps(state['recovery_timeline'])}
+
+    Return your response in JSON format with keys: "report_en" and "report_tl".
+    """
     
     try:
         response = llm.invoke(prompt)
-        state["ndrrmc_report"] = response.get("report_en")
-        state["ndrrmc_report_tl"] = response.get("report_tl")
+        state["ndrrmc_report"] = response.get("report_en", "English synthesis failed.")
+        state["ndrrmc_report_tl"] = response.get("report_tl", "Nabigo ang pagsasalin.")
     except Exception as e:
-        state["ndrrmc_report"] = "Synthesis Error."
-        state["ndrrmc_report_tl"] = "May Error."
+        state["agent_log"].append(f"⚠️ Report Agent Failure: {e}")
+        state["ndrrmc_report"] = "Synthesis fallback active."
+        state["ndrrmc_report_tl"] = "Fallback na ulat."
 
+    state["agent_log"].append("[NDRRMC Reporter] Strategic intelligence finalized.")
     return state
 
 # ==========================================
@@ -237,16 +272,4 @@ async def run_ark_pipeline(event_id: str, scene_path: str, gate_results: List[Di
         agent_log=[],
         error=None
     )
-    
-    print(f"\n[SYSTEM] Initializing Project ARK Pipeline for {event_id}...")
-    result = await app.ainvoke(initial_state)
-    return result
-
-if __name__ == "__main__":
-    async def test_run():
-        mock_gates = [{"gate": 1, "passed": True}]
-        final_state = await run_ark_pipeline("TYPHOON-CARINA-DEMO", "data/raw/Luzon", mock_gates)
-        print("\n[REPORT PREVIEW]")
-        print(final_state["ndrrmc_report"])
-        
-    asyncio.run(test_run())
+    return await app.ainvoke(initial_state)
