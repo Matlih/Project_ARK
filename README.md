@@ -303,3 +303,25 @@ AMD Developer Cloud · NASA EONET API · ESA Copernicus Open Access Hub · IBM-N
 <p align="center">
   <sub>Built under combat conditions for the AMD AI Hackathon 2025 · T-minus 60 seconds, always.</sub>
 </p>
+
+---
+
+## Appendix: AMD MI300X Proof of Compute & Training Logs
+
+To verify the sovereign execution of this pipeline on AMD hardware, below are the telemetry logs from our bare-metal provisioning and LoRA fine-tuning phases on the AMD MI300X (192GB) via DigitalOcean.
+
+### 1. ROCm Gate Pipeline Benchmark
+*Validating the 3-Gate interception system against raw, corrupted satellite arrays before they hit the ML layer.*
+![Gate Pipeline Benchmark](docs/notebook1.PNG)
+
+### 2. Prithvi-100M LoRA Fine-Tuning (ROCm)
+*Executing geometric augmentation and LoRA adapter injection on the NASA/IBM Earth Observation backbone.*
+![Prithvi LoRA Training](docs/train_pritvhi.PNG)
+
+### 3. Qwen-VL-7B Multimodal Fine-Tuning
+*Training the visual-language model to output strict Philippine NDRRMC JSON schema using 4.19M trainable parameters.*
+```text
+trainable params: 4,194,304 || all params: 9,661,129,472 || trainable%: 0.0434
+...
+{'loss': 0.9261, 'grad_norm': 1.59375, 'learning_rate': 6.66e-06, 'epoch': 4.64}
+{'train_runtime': 78.1666, 'train_samples_per_second': 3.198, 'train_loss': 1.557}
