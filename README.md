@@ -94,44 +94,73 @@ NASA EONET (Live Event Detection)
 
 ## How It Was Built
 
-### Track 1 — AMD ROCm Sequential Gate Pipeline
+ARK competes across all three AMD AI Hackathon tracks simultaneously — each track maps directly to a distinct layer of the pipeline.
 
-The first stage is a **three-gate validation pipeline** running on AMD ROCm 6.x, executed in parallel using Python `asyncio`. Each gate acts as a hard filter on the satellite scene before expensive inference is invoked:
+---
 
-| Gate | Validation | MI300X Utilization |
-|:--|:--|:--|
-| **GATE_1_QA** | Signal-to-noise ratio ≥ 26dB; Sentinel-2 L2A band coherence check | Lightweight tensor ops |
-| **GATE_2_CLOUD** | Cloud cover ≤ 20% (optical) — fails over to Sentinel-1 SAR for cloud penetration | ROCm image preprocessing |
-| **GATE_3_ARD** | Analysis Ready Data certification — radiometric calibration, geolocation validation | Full ROCm pipeline |
+### Track 1 — AI Agents & Agentic Workflows
+*Sophisticated agentic systems that automate complex, multi-step workflows using LangGraph + Qwen*
 
-If Gate 2 fails (typhoon cloud cover routinely exceeds 70%), ARK automatically activates **SAR-optical fusion** using Sentinel-1 C-band backscatter overlaid on the Landsat-8 DEM — ensuring the pipeline never halts due to atmospheric obstruction. The MI300X's 192GB HBM3 unified memory means both the SAR coherence tensors and the optical bands are held in a single memory space with zero PCIe transfer overhead.
-
-### Track 2 — Prithvi-100M + Qwen-VL-7B Multimodal Inference
-
-**Prithvi-100M** (NASA/IBM geospatial foundation model) is the core pixel-level inference engine. Fine-tuned with LoRA adapters on Philippine typhoon event data, it produces per-pixel segmentation masks identifying:
-- Inundated land surface
-- Debris flow boundaries
-- Agricultural loss polygons
-- Infrastructure breach zones
-
-**Qwen-VL-7B-Chat** (LoRA fine-tuned on NDRRMC assessment reports) performs multimodal structural damage classification. It receives both the Sentinel-2 false-color composite and the Prithvi segmentation mask as input, classifying each building footprint into NDRRMC Damage Class A through E. The LoRA adapter was trained on historical NDRRMC post-disaster documentation to enforce Philippine government-standard output schema.
-
-**XGBoost** performs the final economic regression — mapping damage class distributions to peso loss estimates using sector-specific asset valuations calibrated to Philippine Statistics Authority property data across residential, commercial, agricultural, and infrastructure categories.
-
-All three models run concurrently in the MI300X's HBM3 pool with no model offloading — a workload that would require model sharding across multiple consumer GPUs.
-
-### Track 3 — LangGraph 6-Agent Sovereign Mission Control
-
-The agentic layer is a **LangGraph directed acyclic graph** where each node is a specialized government-domain agent:
+The agentic core of ARK is a **LangGraph directed acyclic graph** — six specialized government-domain intelligence agents coordinated in a strict execution chain:
 
 ```python
 ARKState → qa_node → damage_assessment_node → economic_valuation_node
         → insurance_risk_node → recovery_planning_node → ndrrmc_officer_node
 ```
 
-Each agent receives the accumulated state from all prior nodes, ensuring full context propagation. The `ndrrmc_officer_node` is powered by the LoRA-tuned Qwen-VL model and enforces strict JSON output parsing to guarantee a structurally valid NDRRMC situation report in both English and Filipino — matching the exact format used by the real NDRRMC Operations Center.
+Each agent receives the fully accumulated state from all prior nodes, ensuring complete context propagation with no information loss. The six agents and their responsibilities:
 
-The entire agentic chain communicates with the frontend via **WebSocket broadcast** (`/ws`), streaming each agent's log entry in real time to the J.A.R.V.I.S. command center HUD.
+| Agent | Role |
+|:--|:--|
+| **QA Node** | Validates satellite scene integrity against gate certification results |
+| **Damage Assessment** | Invokes Qwen-VL-7B to classify structural damage by NDRRMC class (A–E) |
+| **Economic Valuation** | Runs XGBoost regression to produce sector-level peso loss breakdown |
+| **Insurance Risk** | Computes GSIS + private carrier exposure matrix for affected households |
+| **Recovery Planning** | Maps priority response corridors using OSM road network overlay |
+| **NDRRMC Officer** | Synthesizes all upstream outputs into a bilingual government situation report |
+
+The `ndrrmc_officer_node` enforces strict JSON output parsing on the Qwen-VL model, guaranteeing a structurally valid NDRRMC report in both English and Filipino — matching the exact schema used by the real NDRRMC Operations Center. The entire agentic chain communicates with the frontend via **WebSocket broadcast** (`/ws`), streaming each agent's log entry in real time.
+
+**Tech used:** LangGraph · LangChain · Qwen-VL-7B (open-source) · FastAPI async task queue · WebSocket streaming
+
+---
+
+### Track 2 — Fine-Tuning on AMD GPUs
+*Domain-specific model specialization on the AMD Instinct MI300X using ROCm, PyTorch, and HuggingFace*
+
+Two open-source models were fine-tuned on the AMD MI300X using LoRA adapters — both trained and served entirely on ROCm:
+
+**Prithvi-100M LoRA (Geospatial Domain)**
+The NASA/IBM Prithvi-100M earth observation foundation model was fine-tuned on Philippine typhoon event satellite data using LoRA injection into the transformer encoder blocks. The adapter teaches the model to segment Philippine-specific flood morphology patterns — river basin inundation in Luzon, coastal surge in the Visayas, and mountain-valley debris flow in Mindanao — rather than generic global flood signatures.
+
+**Qwen-VL-7B-Chat LoRA (NDRRMC Domain)**
+Qwen-VL-7B-Chat was fine-tuned specifically to enforce the Philippine government's NDRRMC situation report schema. The LoRA adapter (`trainable params: 4,194,304 / 9.66B total — 0.043%`) was trained on historical NDRRMC post-disaster assessment documentation, producing a model that outputs structurally valid, bilingual damage reports without prompt engineering. Training was executed on the MI300X with ROCm PyTorch, achieving convergence in under 80 seconds of GPU time (`train_loss: 1.557`).
+
+Both fine-tuned models are served via **vLLM (ROCm fork)** on the MI300X, exploiting the 192GB HBM3 unified memory to hold both adapters in a single address space with zero model offloading.
+
+**Tech used:** ROCm 6.x · PyTorch (ROCm build) · HuggingFace Transformers · PEFT (LoRA) · HuggingFace Optimum-AMD · vLLM (ROCm) · `accelerate`
+
+---
+
+### Track 3 — Vision & Multimodal AI
+*High-throughput geospatial image analysis and multimodal damage assessment on AMD HBM3*
+
+ARK's vision layer processes multiple data modalities simultaneously, exploiting the MI300X's 192GB HBM3 memory bandwidth to avoid any sensor bottleneck — including the cloud obstruction that disables standard optical-only pipelines during active typhoons.
+
+**Geospatial Vision — Prithvi-100M Inference**
+After fine-tuning, Prithvi-100M performs per-pixel semantic segmentation across multi-band Sentinel-2 scenes (bands B02–B12, 10m–60m resolution). Output masks identify:
+- Inundated land surface (flood extent)
+- Debris flow and landslide boundaries
+- Agricultural loss polygons (rice, banana, coconut crop damage)
+- Infrastructure breach zones (road washouts, bridge failures)
+
+**Multimodal Structural Analysis — Qwen-VL-7B**
+Qwen-VL-7B-Chat ingests two modalities simultaneously: the Sentinel-2 false-color composite (RGB visual) and the Prithvi segmentation mask (semantic overlay). From this fused input, it classifies each identifiable building footprint into NDRRMC Damage Class A through E — the same classification system used by on-the-ground NDRRMC rapid assessment teams.
+
+**SAR-Optical Fusion (Cloud Penetration)**
+When Gate 2 detects cloud cover exceeding 20% — which occurs on virtually every typhoon scene — ARK activates a **Sentinel-1 SAR + Landsat-8 DEM fusion** layer. C-band SAR backscatter penetrates the storm cloud deck entirely, providing flood extent and structural coherence data that optical sensors cannot see. Both raster stacks are held simultaneously in HBM3, enabling zero-copy tensor operations across sensor modalities.
+
+**Tech used:** Prithvi-100M · Qwen-VL-7B · ESA Sentinel-2 L2A · Sentinel-1 SAR · Landsat-8 OLI · STAC API · rasterio · timm · SAR-optical tensor fusion on ROCm
 
 ### Sovereign Simulation Architecture
 
