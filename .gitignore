@@ -31,3 +31,6 @@ mlruns/
 
 # OS Generated Files
 .DS_Store
+
+# claude code
+.claude/

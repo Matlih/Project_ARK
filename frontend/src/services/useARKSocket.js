@@ -3,7 +3,10 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { useArkStore } from '../store/arkStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://165.245.138.122:8000';
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://165.245.138.122t:8000/ws';
+const WS_URL  = import.meta.env.VITE_WS_URL  || 'ws://165.245.138.122:8000/ws'; // fixed: removed stray 't'
+
+// When true, always use the high-fidelity mock regardless of backend reachability
+const SIMULATION_MODE = import.meta.env.VITE_SIMULATION_MODE === 'true';
 
 /**
  * Pings the backend to verify the MI300X instance is online and returning 'live' status.
@@ -15,7 +18,6 @@ export async function checkBackendHealth() {
     const timeout = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(`${API_URL}/health`, { signal: controller.signal });
     clearTimeout(timeout);
-    
     if (!res.ok) return { online: false };
     return { online: true, ...(await res.json()) };
   } catch {
@@ -24,29 +26,28 @@ export async function checkBackendHealth() {
 }
 
 /**
- * Triggers the ARK processing pipeline. Routes seamlessly between Live and Mock environments.
+ * Triggers the ARK processing pipeline. Routes between Simulation, Live, and Mock environments.
  * @param {string} region - Target region for analysis
  */
-export async function triggerPipeline(region = 'Philippines') {
+export async function triggerPipeline(region = 'Philippines: Luzon') {
   const store = useArkStore.getState();
-  const { backendMode } = store;
-  
   store.setStatus('RUNNING');
 
-  // Route 1: Clean Mock Execution
-  if (backendMode === 'mock') {
-    console.log('[ARK Architecture] Live backend bypassed. Executing synthetic pipeline (Mock Mode).');
+  // Route 1: Sovereign Simulation Mode — always wins
+  if (SIMULATION_MODE || store.backendMode === 'mock') {
+    console.log('[ARK] Sovereign Simulation Mode — executing high-fidelity mock.');
     const { runMockPipeline } = await import('./mockPipeline.js');
     runMockPipeline(region);
     return;
   }
 
-  // Route 2: Live Execution with Mid-Flight Fallback
+  // Route 2: Live Execution with mid-flight fallback
   try {
-    const response = await fetch(`${API_URL}/demo`, { method: 'GET' });
+    const encodedRegion = encodeURIComponent(region);
+    const response = await fetch(`${API_URL}/demo?region=${encodedRegion}`, { method: 'GET' });
     if (!response.ok) throw new Error('Live endpoint rejected the request.');
   } catch (error) {
-    console.warn('[ARK Architecture] Live trigger failed mid-flight, falling back to mock pipeline.', error);
+    console.warn('[ARK] Live trigger failed — falling back to mock pipeline.', error);
     const { runMockPipeline } = await import('./mockPipeline.js');
     runMockPipeline(region);
   }
@@ -57,36 +58,37 @@ export async function triggerPipeline(region = 'Philippines') {
  */
 export const resetSystem = async () => {
   const store = useArkStore.getState();
-  
   try {
-    // We swallow errors here because if the backend is down, we still want the UI to reset cleanly.
     await fetch(`${API_URL}/reset`, { method: 'GET' }).catch(() => {});
-  } catch (error) {
-    console.error('[ARK Architecture] Reset API Error:', error);
   } finally {
     store.resetAll();
   }
 };
 
 /**
- * Core WebSocket Hook. 
- * Handles initial mount detection and manages the telemetry stream.
+ * Core WebSocket Hook. Handles initial mount health-check and manages the telemetry stream.
  */
 export const useARKSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    let isMounted = true; // 1. THE KILL-SWITCH FLAG
+    let isMounted = true;
     let rws = null;
 
     const initializeSystem = async () => {
-      const health = await checkBackendHealth();
 
-      // 2. ABORT PROTOCOL: If React unmounted while we were waiting for the fetch, stop here!
+      // Sovereign Simulation Mode bypasses the health check entirely
+      if (SIMULATION_MODE) {
+        console.log('[ARK] SOVEREIGN SIMULATION MODE ACTIVE — backend check skipped.');
+        useArkStore.setState({ backendMode: 'mock' });
+        return;
+      }
+
+      const health = await checkBackendHealth();
       if (!isMounted) return;
 
       if (health.online && health.mode === 'live') {
-        console.log('[ARK Architecture] MI300X cloud active. Establishing real-time telemetry.');
+        console.log('[ARK] MI300X cloud active. Establishing real-time telemetry.');
         useArkStore.setState({ backendMode: 'live' });
 
         rws = new ReconnectingWebSocket(WS_URL, [], {
@@ -98,7 +100,11 @@ export const useARKSocket = () => {
         socketRef.current = rws;
 
         rws.addEventListener('open', () => {
-          console.log('[ARK Architecture] WebSocket connection established.');
+          console.log('[ARK] WebSocket connection established.');
+        });
+
+        rws.addEventListener('close', () => {
+          console.warn('[ARK] WebSocket disconnected — ReconnectingWebSocket will retry.');
         });
 
         rws.addEventListener('message', (event) => {
@@ -111,8 +117,7 @@ export const useARKSocket = () => {
             const timestamp = new Date().toLocaleTimeString();
 
             switch (type) {
-              
-              // === THE LIVE HEARTBEAT CATCH ===
+
               case 'ping':
                 store.updateMetrics({ latencyMs: data.latency_ms });
                 break;
@@ -123,13 +128,12 @@ export const useARKSocket = () => {
                   computeSavedHrs: data.compute_saved_hrs || 0,
                   computeSavedUsd: (data.compute_saved_hrs || 0) * 1.99,
                   analystHrsSaved: (data.compute_saved_hrs || 0) * 2.0,
-                  // We remove the latency override here so the heartbeat controls it exclusively
                 });
                 store.addAgentLog({
                   timestamp,
                   agent: data.gate_name || 'System Gate',
                   message: `${data.status}: ${data.reason || 'Processed'}`,
-                  type: data.status === 'FAIL' ? 'critical' : 'system'
+                  type: data.status === 'FAIL' ? 'critical' : 'system',
                 });
                 break;
 
@@ -138,27 +142,18 @@ export const useARKSocket = () => {
                   timestamp,
                   agent: data.agent || 'Unknown Agent',
                   message: data.message || '',
-                  type: 'agent'
+                  type: 'agent',
                 });
-                
-                // === THE ROBUST STRING CATCH ===
-                // Converts whatever Python sends to lowercase and looks for the keyword
-                const agentName = (data.agent || '').toLowerCase();
-                if (agentName.includes('damage') && Array.isArray(data.coords) && data.coords.length >= 2) {
+                // Globe zoom — match any agent name containing 'damage'
+                if (
+                  (data.agent || '').toLowerCase().includes('damage') &&
+                  Array.isArray(data.coords) &&
+                  data.coords.length >= 2
+                ) {
                   store.setGlobeTarget({
                     lat: data.coords[1],
                     lon: data.coords[0],
-                    label: 'ECONOMIC IMPACT ZONE'
-                  });
-                }
-                break;
-                
-                // Triggers the 3D globe dive
-                if (data.agent === 'damage_assessment_node' && Array.isArray(data.coords) && data.coords.length >= 2) {
-                  store.setGlobeTarget({
-                    lat: data.coords[1],
-                    lon: data.coords[0],
-                    label: 'ECONOMIC IMPACT ZONE'
+                    label: 'ECONOMIC IMPACT ZONE',
                   });
                 }
                 break;
@@ -166,11 +161,12 @@ export const useARKSocket = () => {
               case 'pipeline_complete':
                 store.setStatus('COMPLETE');
                 store.updateMetrics({ pesoLoss: data.total_peso_loss || 0 });
-                store.addReportToArchive(data.report);
-                
-                useArkStore.setState({ 
-                  ndrrmcReport: data.report || null,
-                  isReportVisible: true 
+                // Archive with both languages so the archive viewer supports EN/FIL toggle
+                store.addReportToArchive({ en: data.report || '', fil: data.report_fil || '' });
+                useArkStore.setState({
+                  ndrrmcReport:    data.report     || null,
+                  ndrrmcReportFil: data.report_fil || null,
+                  isReportVisible: true,
                 });
                 break;
 
@@ -180,33 +176,30 @@ export const useARKSocket = () => {
                   timestamp,
                   agent: 'SYSTEM',
                   message: data.message || 'Unidentified pipeline exception.',
-                  type: 'critical'
+                  type: 'critical',
                 });
                 break;
 
               default:
-                console.warn(`[ARK Architecture] Unhandled message type intercepted: ${type}`);
+                console.warn(`[ARK] Unhandled message type: ${type}`);
             }
           } catch (error) {
-            console.error('[ARK Architecture] Failed to parse WebSocket payload:', error, 'Raw Data:', event.data);
+            console.error('[ARK] Failed to parse WebSocket payload:', error, 'Raw:', event.data);
           }
         });
 
         rws.addEventListener('error', (err) => {
-          console.error('[ARK Architecture] WebSocket encountered a connection error:', err);
+          console.error('[ARK] WebSocket error:', err);
         });
 
       } else {
-        // BACKEND OFFLINE OR IN MOCK MODE
-        console.warn('[ARK Architecture] Backend unreachable or not live. Engaging Zero-Downtime Mock Framework.');
+        console.warn('[ARK] Backend unreachable — engaging Zero-Downtime Mock Framework.');
         useArkStore.setState({ backendMode: 'mock' });
-        
         try {
-          // Dynamically import and initialize mock mode if the function is exposed in W.3
           const { initMockMode } = await import('./mockPipeline.js');
           if (initMockMode) initMockMode();
-        } catch (e) {
-          // Graceful catch if initMockMode isn't needed or exported
+        } catch {
+          // initMockMode is optional
         }
       }
     };
@@ -214,10 +207,10 @@ export const useARKSocket = () => {
     initializeSystem();
 
     return () => {
-      isMounted = false; // 3. TRIP THE KILL-SWITCH ON UNMOUNT
+      isMounted = false;
       if (rws) rws.close();
     };
-  }, []); // Empty dependency array ensures singleton connection per mount
-  
+  }, []);
+
   return socketRef.current;
 };

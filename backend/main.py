@@ -3,7 +3,7 @@ import asyncio
 import logging
 import random # Added for the latency simulator
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -123,13 +123,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # 5. /demo endpoint
 @app.get("/demo")
-async def trigger_demo():
-    # Trigger full pipeline with Typhoon Carina fallback
-    # This is the button the judges click
-    asyncio.create_task(execute_full_pipeline("TYPHOON-CARINA-2024-DEMO"))
+async def trigger_demo(region: str = Query(default="Philippines: Luzon", description="Target region")):
+    asyncio.create_task(execute_full_pipeline("TYPHOON-CARINA-2024-DEMO", region=region))
     return {
-        "status": "pipeline_started", 
-        "event": "Typhoon Carina fallback"
+        "status": "pipeline_started",
+        "region": region,
+        "event": "ARK Pipeline — AMD MI300X",
     }
 
 @app.post("/run-ark-pipeline")
@@ -147,7 +146,7 @@ async def get_live_events():
         "fallback_used": len(events) == 0
     }
 
-async def execute_full_pipeline(event_id: Optional[str]):
+async def execute_full_pipeline(event_id: Optional[str], region: str = "Philippines: Luzon"):
     pipeline_start = time.perf_counter()
     
     # 1. INITIALIZE SAFETY STATE
@@ -211,24 +210,29 @@ async def execute_full_pipeline(event_id: Optional[str]):
     ard_certified = True
     
     # 4. HEAVY AGENTIC ANALYSIS
+    # Globe coordinates keyed by region
+    region_coords = {
+        "Philippines: Luzon":    [121.095, 14.637],
+        "Philippines: Visayas":  [123.885, 10.317],
+        "Philippines: Mindanao": [126.046,  7.873],
+    }
+    globe_coords = region_coords.get(region, [121.0, 14.6])
+
     if ard_certified:
         final_state = await run_ark_pipeline(event_id, scene_path, gate_results)
-        
-        # AUDIT: Remap agent updates to HUD Contract
+
         for log_entry in final_state.get("agent_log", []):
             agent_name = log_entry.split(']')[0].replace('[', '').strip()
             msg = log_entry.split(']')[1].strip() if ']' in log_entry else log_entry
-            
+
             await manager.broadcast({
                 "type": "agent_update",
                 "data": {
                     "agent": agent_name,
                     "message": msg,
-                    "coords": [121.0, 14.6] # Triggers globe zoom to Manila/Luzon sector
+                    "coords": globe_coords,
                 }
             })
-            
-            # CINEMATIC PACING: Give the React frontend time to type out the message
             await asyncio.sleep(0.8)
 
     # 5. FINAL SYNTHESIS
