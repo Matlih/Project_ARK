@@ -18,6 +18,11 @@ def get_ph_disasters():
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
+        
+        # --- THE AUDIT LINE ---
+        # Prints the total global events NASA just handed us before we filter for PH.
+        print(f"\n[ARK EONET] Successfully fetched {len(data.get('events', []))} live events directly from NASA.")
+        
     except (requests.exceptions.RequestException, ValueError) as e:
         print(f"EONET API Error: {e}")
         return []
