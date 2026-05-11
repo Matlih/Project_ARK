@@ -16,7 +16,8 @@
 
 <p align="center">
   <strong>From raw satellite pixel → complete bilingual NDRRMC situation report → peso loss estimate</strong><br/>
-  <strong>In under 60 seconds. On a single AMD Instinct™ MI300X.</strong>
+  <strong>In under 60 seconds. On a single AMD Instinct™ MI300X.</strong><br/><br/>
+  <em>"Architect for weeks. Engineer in days."</em>
 </p>
 
 ---
@@ -94,7 +95,7 @@ NASA EONET (Live Event Detection)
 
 ## How It Was Built
 
-ARK competes across all three AMD AI Hackathon tracks simultaneously — each track maps directly to a distinct layer of the pipeline.
+ARK competes across all three AMD AI Hackathon tracks simultaneously. **By spending weeks architecting the deployment strategy, I was able to single-handedly engineer and deploy a 3-track multimodal pipeline—a feat that normally requires a full development team.** Each track maps directly to a distinct layer of the pipeline:
 
 ---
 
