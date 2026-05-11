@@ -2,7 +2,7 @@
 ### *Autonomous Reconnaissance Kinematics — The Geospatial Protocol for Strategic Disaster Response*
 
 <p align="center">
-  <img src="frontend/src/assets/hero.png" alt="Project ARK Command Center" width="100%" />
+  <img src="frontend/src/assets/project_ark-demo.gif" alt="Project ARK Command Center" width="100%" />
 </p>
 
 <p align="center">
