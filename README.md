@@ -52,42 +52,42 @@ NASA EONET (Live Event Detection)
          │
          ▼
 ┌─────────────────────────────────────────────────┐
-│              INGESTION LAYER                     │
+│              INGESTION LAYER                    │
 │  ESA Sentinel-2 L2A / Landsat-8 OLI / SAR       │
-│  STAC API → Scene Staging → ARD Preparation      │
+│  STAC API → Scene Staging → ARD Preparation     │
 └─────────────────────┬───────────────────────────┘
                       │
          ┌────────────▼────────────┐
-         │   PARALLEL GATE PIPELINE │  ← AMD MI300X ROCm
-         │                          │
-         │  GATE 1 — Sensor QA      │  SNR threshold, band coherence
-         │  GATE 2 — Atmospheric    │  Cloud cover ≤20%, SAR fallback
-         │  GATE 3 — Spectral ARD   │  Analysis Ready Data certification
+         │  PARALLEL GATE PIPELINE │  ← AMD MI300X ROCm
+         │                         │
+         │  GATE 1 — Sensor QA     │  SNR threshold, band coherence
+         │  GATE 2 — Atmospheric   │  Cloud cover ≤20%, SAR fallback
+         │  GATE 3 — Spectral ARD  │  Analysis Ready Data certification
          └────────────┬────────────┘
                       │  ARD-certified scene
          ┌────────────▼────────────┐
-         │     INFERENCE LAYER      │  ← 192GB HBM3 unified memory
-         │                          │
-         │  Prithvi-100M            │  Flood/damage pixel segmentation
-         │  Qwen-VL-7B (LoRA)       │  Structural damage classification
-         │  XGBoost Estimator       │  Peso loss regression by asset class
+         │     INFERENCE LAYER     │  ← 192GB HBM3 unified memory
+         │                         │
+         │  Prithvi-100M           │  Flood/damage pixel segmentation
+         │  Qwen-VL-7B (LoRA)      │  Structural damage classification
+         │  XGBoost Estimator      │  Peso loss regression by asset class
          └────────────┬────────────┘
                       │
          ┌────────────▼────────────┐
-         │   6-AGENT LANGGRAPH      │  Sovereign agentic orchestration
-         │   MISSION CONTROL        │
-         │                          │
-         │  [1] QA Node             │  Scene integrity validation
-         │  [2] Damage Assessment   │  Qwen-VL structural classification
-         │  [3] Economic Valuation  │  XGBoost sector-level loss
-         │  [4] Insurance Risk      │  GSIS + private exposure matrix
-         │  [5] Recovery Planning   │  Corridor mapping via OSM overlay
-         │  [6] NDRRMC Officer      │  Bilingual situation report (EN/FIL)
+         │   6-AGENT LANGGRAPH     │  Sovereign agentic orchestration
+         │   MISSION CONTROL       │
+         │                         │
+         │  [1] QA Node            │  Scene integrity validation
+         │  [2] Damage Assessment  │  Qwen-VL structural classification
+         │  [3] Economic Valuation │  XGBoost sector-level loss
+         │  [4] Insurance Risk     │  GSIS + private exposure matrix
+         │  [5] Recovery Planning  │  Corridor mapping via OSM overlay
+         │  [6] NDRRMC Officer     │  Bilingual situation report (EN/FIL)
          └────────────┬────────────┘
                       │
          ┌────────────▼────────────┐
-         │   COMMAND CENTER HUD     │  React + Three.js + WebSocket
-         │   (Real-Time Streaming)  │  3D globe · agent log · metrics
+         │   COMMAND CENTER HUD    │  React + Three.js + WebSocket
+         │   (Real-Time Streaming) │  3D globe · agent log · metrics
          └─────────────────────────┘
 ```
 
