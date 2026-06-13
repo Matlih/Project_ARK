@@ -95,7 +95,7 @@ NASA EONET (Live Event Detection)
 
 ## How It Was Built
 
-ARK competes across all three AMD AI Hackathon tracks simultaneously. **By spending weeks architecting the deployment strategy, I was able to single-handedly engineer and deploy a 3-track multimodal pipeline—a feat that normally requires a full development team.** Each track maps directly to a distinct layer of the pipeline:
+ARK competes across all three AMD Developer Hackathon tracks simultaneously. **By spending weeks architecting the deployment strategy, I was able to single-handedly engineer and deploy a 3-track multimodal pipeline—a feat that normally requires a full development team.** Each track maps directly to a distinct layer of the pipeline:
 
 ---
 
@@ -331,7 +331,7 @@ AMD Developer Cloud · NASA EONET API · ESA Copernicus Open Access Hub · IBM-N
 ---
 
 <p align="center">
-  <sub>Built under combat conditions for the AMD AI Hackathon 2025 · T-minus 60 seconds, always.</sub>
+  <sub>Built under combat conditions for the AMD Developer Hackathon 2026 · T-minus 60 seconds, always.</sub>
 </p>
 
 ---
