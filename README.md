@@ -91,6 +91,8 @@ NASA EONET (Live Event Detection)
          └─────────────────────────┘
 ```
 
+## Project ARK System Architecture
+
 <p align="center">
   <img src="docs/images/system_architecture.png" alt="Project ARK System Architecture" width="100%" />
 </p>
