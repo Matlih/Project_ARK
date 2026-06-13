@@ -1,0 +1,52 @@
+Hardware & GPU Runtime
+Compute: AMD Instinct™ MI300X (192GB HBM3)
+Cloud Environment: AMD Developer Cloud (Digital Ocean)
+GPU Runtime: ROCm 6.x
+Deep Learning Framework: PyTorch (custom ROCm build)
+
+AI Models & Machine Learning
+Earth Observation (Geospatial Vision): Prithvi-100M (NASA/IBM foundation model)
+
+Multimodal Structural Analysis: Qwen-VL-7B-Chat (Open-source visual-language model)
+
+Economic Valuation: XGBoost (Regression by asset class) and scikit-learn
+
+Fine-Tuning & Serving: * LoRA fine-tuning (via PEFT)
+
+HuggingFace Transformers & Optimum-AMD
+
+vLLM (ROCm fork for inference)
+
+accelerate and timm
+
+Backend & Agentic Orchestration
+Core Backend: Python 3.11, FastAPI, Uvicorn, asyncio
+
+Agentic Framework: LangGraph (6-node Directed Acyclic Graph) and LangChain
+
+Data Processing: rasterio (for geospatial array manipulation), SAR-optical tensor fusion
+
+Frontend & 3D Visualization
+Core Framework: React 18.3 configured with Vite 5
+
+Styling: Tailwind CSS
+
+State Management: Zustand (for global state and Intelligence Archive)
+
+3D Globe / Visuals: React-Three-Fiber, Three.js, @react-three/drei, @react-three/postprocessing
+
+Voice Interface: Web Speech Synthesis API (J.A.R.V.I.S. priority-interrupt TTS with fil-PH locale support)
+
+Data Pipelines & Real-Time Communication
+Satellite Data: ESA Sentinel-2 L2A, Sentinel-1 SAR, Landsat-8 OLI
+
+Event Detection: NASA EONET API v3 (filtered for the Philippine bounding box)
+
+Data Retrieval: STAC API
+
+Comms Protocol: Native FastAPI WebSockets / ReconnectingWebSocket on the frontend
+
+Deployment & Infrastructure
+Frontend Hosting: Vercel (featuring a Sovereign Simulation Mode)
+
+Backend Hosting: Bare-metal AMD Developer Cloud (CORS-hardened)

@@ -91,6 +91,14 @@ NASA EONET (Live Event Detection)
          └─────────────────────────┘
 ```
 
+<p align="center">
+  <img src="docs/images/system_architecture.png" alt="Project ARK System Architecture" width="100%" />
+</p>
+
+<p align="center">
+  <sub><a href="docs/system_architecture.md">View editable Mermaid source</a></sub>
+</p>
+
 ---
 
 ## How It Was Built
